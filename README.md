@@ -1,4 +1,4 @@
-# SnapReader (Nuxt 3)
+# mybot (Nuxt 3)
 
 画像をアップロードまたは撮影して OpenAI で要約するシンプルな Nuxt 3 アプリです。Cloudflare Workers へのデプロイ設定付き。
 
