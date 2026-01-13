@@ -118,7 +118,7 @@ export default defineEventHandler(async (event) => {
       body: JSON.stringify({
         model: 'gpt-5.2',
         messages: apiMessages,
-        max_tokens: 500,
+        max_completion_tokens: 800,
       }),
     });
 
