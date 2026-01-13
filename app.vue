@@ -8,7 +8,7 @@
       </header>
 
       <section class="chat">
-        <div v-if="messages.length" class="chat__log">
+        <div v-if="messages.length" ref="chatLog" class="chat__log">
           <div
             v-for="(message, index) in messages"
             :key="index"
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -58,6 +58,12 @@ const messages = ref<ChatMessage[]>([
 const chatInput = ref('');
 const loading = ref(false);
 const error = ref('');
+const chatLog = ref<HTMLElement | null>(null);
+
+const scrollToBottom = () => {
+  if (!chatLog.value) return;
+  chatLog.value.scrollTop = chatLog.value.scrollHeight;
+};
 
 const formatText = (text: string) => {
   const withoutBlocks = text.replace(/```[\s\S]*?```/g, (block) =>
@@ -70,7 +76,10 @@ const formatText = (text: string) => {
     .replace(/^\s*[-*+]\s+/gm, '')
     .replace(/^\s*\d+\.\s+/gm, '')
     .replace(/[`*_~]/g, '');
-  return withoutMarkdown.replace(/。/g, '。\n').trim();
+  return withoutMarkdown
+    .replace(/。/g, '。\n')
+    .replace(/\n\s*\n+/g, '\n')
+    .trim();
 };
 
 const sendChat = async () => {
@@ -104,6 +113,8 @@ const sendChat = async () => {
   } finally {
     chatInput.value = '';
     loading.value = false;
+    await nextTick();
+    scrollToBottom();
   }
 };
 
@@ -115,6 +126,15 @@ const onChatKeydown = (event: KeyboardEvent) => {
   event.preventDefault();
   sendChat();
 };
+
+watch(
+  messages,
+  async () => {
+    await nextTick();
+    scrollToBottom();
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>
