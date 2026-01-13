@@ -32,6 +32,6 @@
 - PRの説明に関連するIssueやタスクをリンクします。
 
 ## 設定とセキュリティの注意点
-- ローカルの秘密情報は `.env`（`.env.example` を参照）に置きます。ローカルでは `OPENAI_API_KEY` を使います。
-- Cloudflareでは `wrangler secret put OPENAI_API_KEY` で秘密情報を保存します（コミットしない）。
+- ローカルの秘密情報は `.env`（`.env.example` を参照）に置きます。ローカルでは `NUXT_OPENAI_API_KEY` を使います。
+- Cloudflareでは `wrangler secret put NUXT_OPENAI_API_KEY` で秘密情報を保存します（コミットしない）。
 - `.nuxt/` や `.output/` などの生成フォルダはコミットしません。
