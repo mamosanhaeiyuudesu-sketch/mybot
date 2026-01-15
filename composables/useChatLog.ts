@@ -59,6 +59,13 @@ export const useChatLog = () => {
     saveLogs(logMessages.value);
   };
 
+  const removeLogMessages = (ids: string[]) => {
+    if (!ids.length) return;
+    const idSet = new Set(ids);
+    logMessages.value = logMessages.value.filter((item) => !idSet.has(item.id));
+    saveLogs(logMessages.value);
+  };
+
   const formatTime = (value: string) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '';
@@ -71,6 +78,7 @@ export const useChatLog = () => {
   return {
     logMessages,
     addLogMessage,
+    removeLogMessages,
     ensureLoaded,
     formatTime,
   };
