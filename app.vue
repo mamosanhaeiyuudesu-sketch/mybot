@@ -1,146 +1,11 @@
 <template>
-  <div class="page">
-    <main class="card">
-      <header class="card__header">
-        <p class="eyebrow">CalmCounsel</p>
-        <h1>話しかけるだけのカウンセリングチャット</h1>
-        <p class="hint">気持ちをそのまま書いてください。短くても大丈夫です。</p>
-      </header>
-
-      <section class="chat">
-        <div v-if="messages.length" ref="chatLog" class="chat__log">
-          <div
-            v-for="(message, index) in messages"
-            :key="index"
-            class="chat__bubble"
-            :class="message.role === 'user' ? 'chat__bubble--user' : 'chat__bubble--assistant'"
-          >
-            <p>{{ message.content }}</p>
-          </div>
-        </div>
-        <p v-else class="chat__empty">最初の一言を送ると、カウンセラーが返答します。</p>
-
-        <form class="chat__form" @submit.prevent="sendChat">
-          <textarea
-            v-model="chatInput"
-            class="chat__input"
-            placeholder="いまの気持ちを入力..."
-            :disabled="loading"
-            @keydown="onChatKeydown"
-          ></textarea>
-          <button class="primary" type="submit" :disabled="loading || !chatInput.trim()">
-            {{ loading ? '送信中...' : '送信' }}
-          </button>
-        </form>
-
-        <section v-if="error" class="status status--error">
-          <p>{{ error }}</p>
-        </section>
-      </section>
-    </main>
-  </div>
+  <NuxtPage />
 </template>
 
-<script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
-
-type ChatMessage = {
-  role: 'user' | 'assistant';
-  content: string;
-};
-
-const messages = ref<ChatMessage[]>([
-  {
-    role: 'assistant',
-    content: 'こんにちは。話したいことがあれば、ゆっくり聞かせてください。',
-  },
-]);
-const chatInput = ref('');
-const loading = ref(false);
-const error = ref('');
-const chatLog = ref<HTMLElement | null>(null);
-
-const scrollToBottom = () => {
-  if (!chatLog.value) return;
-  chatLog.value.scrollTop = chatLog.value.scrollHeight;
-};
-
-const formatText = (text: string) => {
-  const withoutBlocks = text.replace(/```[\s\S]*?```/g, (block) =>
-    block.replace(/```/g, '')
-  );
-  const withoutMarkdown = withoutBlocks
-    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
-    .replace(/^\s*#+\s+/gm, '')
-    .replace(/^\s*>\s+/gm, '')
-    .replace(/^\s*[-*+]\s+/gm, '')
-    .replace(/^\s*\d+\.\s+/gm, '')
-    .replace(/[`*_~]/g, '');
-  return withoutMarkdown
-    .replace(/。/g, '。\n')
-    .replace(/\n\s*\n+/g, '\n')
-    .trim();
-};
-
-const sendChat = async () => {
-  const question = chatInput.value.trim();
-  if (!question || loading.value) return;
-
-  loading.value = true;
-  error.value = '';
-
-  const nextMessages: ChatMessage[] = [
-    ...messages.value,
-    { role: 'user', content: question },
-  ];
-  const trimmedMessages = nextMessages.slice(-12);
-  messages.value = [...trimmedMessages, { role: 'assistant', content: '...' }];
-  const assistantIndex = messages.value.length - 1;
-
-  try {
-    const response = await $fetch<{ reply: string }>('/api/chat', {
-      method: 'POST',
-      body: { messages: trimmedMessages },
-    });
-
-    const reply = formatText(response.reply || '');
-    messages.value[assistantIndex].content = reply || 'すみません、うまく返答できませんでした。';
-  } catch (err: any) {
-    const message =
-      err?.data?.message || err?.statusMessage || err?.message || '返信の取得に失敗しました。';
-    messages.value.splice(assistantIndex, 1);
-    error.value = message;
-  } finally {
-    chatInput.value = '';
-    loading.value = false;
-    await nextTick();
-    scrollToBottom();
-  }
-};
-
-const onChatKeydown = (event: KeyboardEvent) => {
-  if (event.key !== 'Enter') return;
-  if (event.isComposing) return;
-  if (event.shiftKey) return;
-
-  event.preventDefault();
-  sendChat();
-};
-
-watch(
-  messages,
-  async () => {
-    await nextTick();
-    scrollToBottom();
-  },
-  { deep: true }
-);
-</script>
-
-<style scoped>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Fraunces:wght@600;700&display=swap');
 
-:global(body) {
+body {
   margin: 0;
   font-family: 'Work Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: radial-gradient(circle at top, #fef9ef 0, #f5efe6 45%, #e9e1d5 100%);
@@ -152,7 +17,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 16px;
+  padding: 92px 16px;
 }
 
 .card {
@@ -165,6 +30,37 @@ watch(
   backdrop-filter: blur(10px);
   display: grid;
   gap: 16px;
+}
+
+.tab-bar {
+  position: fixed;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(82, 67, 56, 0.12);
+  box-shadow: 0 12px 24px rgba(82, 67, 56, 0.12);
+  z-index: 20;
+}
+
+.tab {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: transparent;
+  color: #6f5b4f;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tab--active {
+  background: rgba(214, 160, 109, 0.25);
+  color: #4b2f1c;
 }
 
 .card__header h1 {
@@ -189,19 +85,43 @@ watch(
 }
 
 .chat {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
 .chat__log {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 16px;
   border-radius: 16px;
   border: 1px solid rgba(82, 67, 56, 0.1);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6));
-  max-height: 360px;
+  max-height: none;
   overflow-y: auto;
+}
+
+.log__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log__meta {
+  margin: 0;
+  font-size: 12px;
+  color: #7b6a5f;
+}
+
+.log__item--user {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.log__item--assistant {
+  align-items: flex-start;
+  text-align: left;
 }
 
 .chat__bubble {
@@ -213,14 +133,15 @@ watch(
 }
 
 .chat__bubble--user {
-  justify-self: end;
+  align-self: flex-end;
+  max-width: 70%;
   background: rgba(214, 160, 109, 0.18);
   border: 1px solid rgba(214, 160, 109, 0.45);
   color: #4b2f1c;
 }
 
 .chat__bubble--assistant {
-  justify-self: start;
+  align-self: flex-start;
   background: rgba(96, 139, 120, 0.16);
   border: 1px solid rgba(96, 139, 120, 0.35);
   color: #2c3b34;
@@ -292,6 +213,20 @@ button:disabled {
 @media (max-width: 640px) {
   .card {
     padding: 22px;
+  }
+
+  .page {
+    padding: 32px 16px;
+  }
+
+  .tab-bar {
+    position: static;
+    transform: none;
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+    border-radius: 14px;
+    padding: 10px 12px;
   }
 
   .chat__form {
