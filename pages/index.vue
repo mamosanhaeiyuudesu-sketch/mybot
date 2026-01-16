@@ -55,7 +55,7 @@
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { useChatLog, type ChatMessage } from '~/composables/useChatLog';
 
-const { addLogMessage, ensureLoaded, formatTime } = useChatLog();
+const { addLogMessage, ensureLoaded, formatTime, logMessages } = useChatLog();
 
 const messages = useState<ChatMessage[]>('chat-messages', () => [
   {
@@ -148,10 +148,29 @@ const onChatKeydown = (event: KeyboardEvent) => {
 
 onMounted(() => {
   ensureLoaded();
-  messages.value = messages.value.map((message) => ({
-    ...message,
-    createdAt: message.createdAt || new Date().toISOString(),
-  }));
+  const todayLogs = logMessages.value.filter((log) => {
+    const date = new Date(log.createdAt);
+    if (Number.isNaN(date.getTime())) return false;
+    const today = new Date();
+    return (
+      date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate()
+    );
+  });
+  const hasUserMessage = messages.value.some((message) => message.role === 'user');
+  if (!hasUserMessage && todayLogs.length > 0) {
+    messages.value = todayLogs.map((log) => ({
+      role: log.role,
+      content: log.content,
+      createdAt: log.createdAt || new Date().toISOString(),
+    }));
+  } else {
+    messages.value = messages.value.map((message) => ({
+      ...message,
+      createdAt: message.createdAt || new Date().toISOString(),
+    }));
+  }
 });
 
 watch(

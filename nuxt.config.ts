@@ -14,6 +14,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     openaiApiKey: '', // 値は入れない
+    feedbackWebhookUrl: '', // 値は入れない
   },
   nitro: {
     preset: 'cloudflare',

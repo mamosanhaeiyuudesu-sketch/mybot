@@ -1,6 +1,41 @@
 <template>
   <NuxtPage />
+  <div v-if="loaded && !userName" class="name-modal__backdrop">
+    <div class="name-modal" role="dialog" aria-modal="true" aria-labelledby="name-modal-title">
+      <h2 id="name-modal-title">お名前を入力してください</h2>
+      <p>入力が完了するまで利用を開始できません。</p>
+      <input
+        v-model="nameInput"
+        class="name-modal__input"
+        type="text"
+        placeholder="例：福田"
+        autofocus
+      />
+      <button class="primary" type="button" :disabled="!nameInput.trim()" @click="handleSave">
+        はじめる
+      </button>
+    </div>
+  </div>
 </template>
+
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { useUserName } from '~/composables/useUserName';
+
+const { userName, saveUserName, ensureLoaded, loaded } = useUserName();
+const nameInput = ref('');
+
+onMounted(() => {
+  ensureLoaded();
+  nameInput.value = userName.value;
+});
+
+const handleSave = () => {
+  const trimmed = nameInput.value.trim();
+  if (!trimmed) return;
+  saveUserName(trimmed);
+};
+</script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Fraunces:wght@600;700&display=swap');
@@ -10,6 +45,54 @@ body {
   font-family: 'Work Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: radial-gradient(circle at top, #fef9ef 0, #f5efe6 45%, #e9e1d5 100%);
   color: #2b2b2b;
+}
+
+.name-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 43, 43, 0.4);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+
+.name-modal {
+  width: min(420px, 90vw);
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 18px;
+  border: 1px solid rgba(54, 36, 25, 0.1);
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 22px 50px rgba(82, 67, 56, 0.2);
+}
+
+.name-modal h2 {
+  margin: 0;
+  font-size: 20px;
+  font-family: 'Fraunces', 'Work Sans', serif;
+  color: #3a2a1f;
+}
+
+.name-modal p {
+  margin: 0;
+  color: #6f5b4f;
+  font-size: 14px;
+}
+
+.name-modal__input {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(82, 67, 56, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  color: #2b2b2b;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.name-modal__input:focus {
+  outline: 2px solid rgba(214, 160, 109, 0.6);
+  outline-offset: 1px;
 }
 
 .page {
@@ -88,6 +171,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .chat__log {
@@ -138,6 +224,7 @@ body {
   background: rgba(214, 160, 109, 0.18);
   border: 1px solid rgba(214, 160, 109, 0.45);
   color: #4b2f1c;
+  text-align: left;
 }
 
 .chat__bubble--assistant {
